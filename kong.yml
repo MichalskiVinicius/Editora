@@ -1,0 +1,34 @@
+_format_version: "3.0"
+
+services:
+  - name: acl-service
+    url: http://acl-service:3000
+    routes:
+      - name: print-orders-route
+        paths:
+          - /api/v1/print-orders
+        strip_path: false
+      - name: editorial-route
+        paths:
+          - /api/v1/editorial/approve
+        strip_path: false
+    plugins:
+      - name: key-auth
+      - name: cors
+        config:
+          origins:
+            - "*" # Em produção, mudamos para "https://sua-interface.vercel.app"
+          methods:
+            - GET
+            - POST
+            - OPTIONS
+          headers:
+            - apikey
+            - Content-Type
+          credentials: true
+          max_age: 3600
+
+consumers:
+  - username: ecommerce-app
+    keyauth_credentials:
+      - key: "chave-secreta-ecommerce-123"
