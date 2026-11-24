@@ -54,5 +54,4 @@ flowchart TB
 
 \- Dados pessoais são higienizados antes de qualquer envio ao serviço de IA (ADR-006).
 
-\- \[CONFIRMAR] Se o gateway de pagamento já existe no projeto. Se não existir, remover do diagrama.
 

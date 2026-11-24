@@ -38,5 +38,4 @@ Vocabulário compartilhado pelo negócio e pelo código. Os nomes de classes, m�
 
 \## Observações
 
-\- \[CONFIRMAR] Os termos com o vocabulário usado no código (nomes das funções e campos em catalogo.js e royalties.js) e ajustar o que for diferente.
 
