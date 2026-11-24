@@ -13,6 +13,7 @@ Vinicius Michalski, Executor & Especialista em IA-Native & Autonomia, @Michalski
 Guilherme Doleny, Executor & QA & Desenvolvedor de Fitness Functions, @devdoleny
 
  
+*Imagens dos diagramas junto com os arquivos
 
 1. Visão Geral do Sistema e Domínio de Negócio 
 
