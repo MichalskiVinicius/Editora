@@ -24,5 +24,4 @@
 
 \- A classificação segue a ADR-004.
 
-\- \[CONFIRMAR] Se o processamento de pagamentos existe no projeto. Se não existir, remover a última linha.
 

@@ -82,9 +82,9 @@ flowchart TB
 
 | Agente de Recomendação | agente-ia.js | Integração com a IA, saída estruturada e fallback (ADR-006) |
 
-| Higienização de PII | \[CONFIRMAR onde fica] | Garante a conformidade com a LGPD |
+| Higienização de PII | `lgpd.fitness.test.js` (validação) e `server.js` (contrato restrito) | Garante a conformidade com a LGPD |
 
-| Adaptador da Gráfica (ACL) | \[CONFIRMAR se existe] | Protege o domínio do formato legado (ADR-002, ADR-004) |
+| Adaptador da Gráfica (ACL) | `server.js` (posicional EDI) e `adapters/grafica-adapter.cjs` (XML) | Protege o domínio do formato legado (ADR-002, ADR-004) |
 
 
 
@@ -96,5 +96,4 @@ O arquivo lgpd.fitness.test.js é a fitness function que verifica a regra de pri
 
 \## Observações
 
-\- \[CONFIRMAR] Os nomes dos componentes e quais deles existem como arquivo no código. Se o Adaptador da Gráfica ainda não existir, marcar como "a implementar" ou criar a branch do padrão Adapter.
 

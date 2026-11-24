@@ -1,155 +1,104 @@
-Identificação da Equipe 
+# Agile Dead Trees — Editora Digital e Publicação Híbrida
 
-Nome do Integrante, Função na Sprint 4 (Liderança / Pesquisador / Executor), GitHub 
+## Identificação da Equipe
 
-Vinicius Michalski, Líder & Arquiteto Principal, @MichalskiVinicius
+| Nome do Integrante | Função na Sprint 4 | GitHub |
+|---|---|---|
+| Vinicius Michalski | Líder, Arquiteto Principal & Especialista em IA-Native | [@MichalskiVinicius](https://github.com/MichalskiVinicius) |
+| Leonardo Lima | Pesquisador & Modelagem DDD | [@LeoLima777](https://github.com/LeoLima777) |
+| Gustavo Erich | Pesquisador & Engenheiro de Resiliência e Integração | [@gustavoerich](https://github.com/gustavoerich) |
+| Guilherme Doleny | Executor, QA & Desenvolvedor de Fitness Functions | [@devdoleny](https://github.com/devdoleny) |
 
-Leonardo Lima, Pesquisador & Modelagem DDD, @LeoLima777
+---
 
-Gustavo Erich, Pesquisador & Engenheiro de Resiliência & Integração, @gustavoerich
+## 1. Visão Geral do Sistema e Domínio de Negócio
 
-Vinicius Michalski, Executor & Especialista em IA-Native & Autonomia, @MichalskiVinicius 
+### 1.1. Contexto do Projeto Selecionado
+**Architectural Kata:** Agile Dead Trees (Editora Digital e Publicação Híbrida).
 
-Guilherme Doleny, Executor & QA & Desenvolvedor de Fitness Functions, @devdoleny
+**Desafio Principal de Engenharia:** Orquestrar o fluxo de publicação híbrida (e-books e impressão física) em uma editora em transição digital, desacoplando o núcleo editorial de gráficas físicas legadas (via arquivos posicionais EDI/Mainframe), garantindo cálculo assíncrono e auditável de direitos autorais (royalties), sincronização rápida de catálogo digital, conformidade automatizada com a LGPD e integração de um Agente de IA.
 
- 
-*Imagens dos diagramas junto com os arquivos.
+### 1.2. Resumo da Solução Proposta
+A arquitetura adota **Arquitetura Orientada a Eventos (EDA)** com microsserviços em Node.js orquestrados via Docker Compose (`editora-network`). O **Kong API Gateway** centraliza autenticação (`key-auth`), roteamento e CORS na borda (`http://localhost:8000`).
 
-1. Visão Geral do Sistema e Domínio de Negócio 
+Para isolar o domínio moderno da gráfica física legada, o `acl-service` (`server.js`) atua como **Camada Anti-Corrupção (ACL)**, traduzindo requisições JSON para arquivos posicionais de largura fixa (`ORDER_*.txt`) e publicando eventos no **Apache Kafka** (KRaft). Os consumidores (`royalties-service`, `catalogo-service` e `ai-agent-service`) processam os eventos de forma assíncrona e desacoplada, com persistência relacional em **PostgreSQL 15** (`agiledb`).
 
-1.1. Contexto do Projeto Selecionado 
+---
 
-Architectural Kata: Agile Dead Trees (Editora Digital e Publicação Híbrida). 
+## 2. Atributos de Qualidade e Matriz QAW
 
-Desafio Principal de Engenharia: Orquestrar o fluxo de publicação híbrida (e-books vs. impressão física) em uma editora em transição digital, desacoplando o núcleo editorial de gráficas físicas legadas (via arquivos posicionais EDI/Mainframe), garantindo cálculo assíncrono e auditável de direitos autorais (royalties), sincronização rápida de catálogo digital, conformidade automatizada com a LGPD e integração de um Agente de IA para recomendação e diagramação personalizada. 
+| Atributo de Qualidade | Cenário Padronizado | Medida da Resposta (Meta) |
+|---|---|---|
+| Desempenho / Latência | Requisições simultâneas de criação de ordem de impressão via Kong API Gateway. | Resposta HTTP `202 Accepted` com latência p95 < 250ms (processamento assíncrono no Kafka). |
+| Disponibilidade / Resiliência | Indisponibilidade temporária de um consumidor (`royalties`, `catalogo` ou `ai-agent`). | Eventos retidos no Kafka e reinício automático de contêineres (`restart: always`) sem derrubar o `acl-service`. |
+| Privacidade / Conformidade (LGPD) | Consulta ao endpoint de status de impressão (`GET /api/v1/print-orders/{id}/status`). | Zero exposição de e-mail ou CPF; payload restrito a `orderId` e `status`, validado por fitness function. |
 
-1.2. Resumo da Solução Proposta 
+---
 
-A arquitetura proposta para a Editora Agile Dead Trees moderniza o fluxo de publicação híbrida migrando processos acoplados a sistemas legados para uma Arquitetura Orientada a Eventos (EDA) baseada em microsserviços independentes. A solução adota um modelo híbrido no qual a interface web (PrintBridge, em Next.js/React na Vercel) comunica-se com o backend conteinerizado através do Kong API Gateway, centralizando autenticação (key-auth), roteamento e políticas de CORS na borda do sistema. 
+## 3. Visão Geral da Arquitetura (Modelo C4)
 
-Para proteger o domínio moderno da rigidez das gráficas físicas legadas, foi implementada uma Camada Anti-Corrupção (ACL) em Node.js (acl-service), utilizando os padrões Adapter, Factory Method e Content-Based Router (EIP). Esse serviço traduz contratos JSON para arquivos posicionais de largura fixa (ORDER_*.txt / EDI) e publica eventos de domínio no Apache Kafka (modo KRaft). O barramento assíncrono habilita o processamento paralelo e desacoplado pelos consumidores: o royalties-service calcula e audita pagamentos de autores, o catalogo-service sincroniza títulos digitais em menos de 1 segundo e o ai-agent-service gera recomendações de leitura e diretrizes de diagramação personalizada com mecanismo de fallback estruturado. 
+- [Nível 1 — Diagrama de Contexto](docs/c4-model/nivel-1-contexto.md)
+- [Nível 2 — Diagrama de Contêineres](docs/c4-model/nivel-2-conteineres.md)
+- [Nível 3 — Diagrama de Componentes](docs/c4-model/nivel-3-componentes.md)
 
-Sob a perspectiva de confiabilidade e governança, toda a infraestrutura é orquestrada via Docker Compose (editora-network, persistência em PostgreSQL e política restart: always), garantindo resiliência a falhas parciais e nivelamento de carga. A conformidade com a LGPD (Privacy by Design) é assegurada de forma contínua por meio de Fitness Functions automatizadas em Jest (lgpd.fitness.test.js), impedindo o vazamento de dados pessoais (PII) entre serviços, logs e chamadas ao modelo de IA. 
+---
 
- 
+## 4. Domain-Driven Design (DDD) & Limites de Contexto
 
- 
+### 4.1. Classificação dos Subdomínios
+- **Core Domain:** Publicação Híbrida, Catálogo Digital (`catalogo.js`) e Cálculo de Royalties (`royalties.js`).
+- **Supporting Subdomain:** Orquestração Editorial e Recomendações com IA (`agente-ia.js`).
+- **Generic Subdomain:** API Gateway e Autenticação (`kong.yml`).
 
-2. Atributos de Qualidade e Matriz QAW 
+### 4.2. Documentação DDD e ACL
+- [Subdomínios](docs/ddd/subdominios.md)
+- [Mapa de Contexto](docs/ddd/mapa-de-contexto.md)
+- [Glossário (Linguagem Ubíqua)](docs/ddd/glossario.md)
 
-Os atributos de qualidade prioritários foram definidos com base nos trade-offs essenciais do sistema: 
+---
 
-Atributo de Qualidade, Cenário Padronizado (Fonte -> Estímulo -> Artefato -> Ambiente -> Resposta), Medida da Resposta (Métrica Objetivo) 
+## 5. Padrões de Projeto & Princípios SOLID
 
-Desempenho / Latência, Usuários concorrentes enviam requisições em pico no backend sob carga normal., Latência p95 < 250ms na resposta de confirmação. 
+- **DIP e OCP:** Desacoplamento entre a lógica de envio e os conectores concretos de integração.
+- **Catálogo GoF completo:** [docs/padroes-gof.md](docs/padroes-gof.md)
 
-Disponibilidade / Resiliência, Falha de rede ou queda no servidor de pagamento em ambiente de produção., Isolamento via Circuit Breaker e Fallback sem indisponibilizar a UI. 
+| Padrão GoF | Categoria | Localização no Código | Problema de Engenharia Resolvido |
+|---|---|---|---|
+| Factory Method | Criacional | [adapters/fabrica-conectores.cjs](adapters/fabrica-conectores.cjs) | Instanciação de conectores sem acoplar o domínio às classes concretas. |
+| Adapter | Estrutural | [adapters/grafica-adapter.cjs](adapters/grafica-adapter.cjs) | Tradução de pedidos do domínio para o formato legado da gráfica (ACL). |
 
-Escalabilidade / Elasticidade, Salto de acessos de 1.000 para 10.000 req/s durante evento pico., Subida automática de réplicas via auto-scaling em menos de 45 segundos. 
+---
 
- 
+## 6. Resiliência, Integração e IA-Native
 
-3. Visão Geral da Arquitetura (Modelo C4) 
+- **Nivelamento de Carga (Load Leveling):** Apache Kafka desacopla o produtor (`acl-service`) dos consumidores (`royalties-service`, `catalogo-service`, `ai-agent-service`).
+- **Recuperação de Contêineres:** Política `restart: always` no `docker-compose.yml`.
+- **Componente IA-Native:** `ai-agent-service` (`agente-ia.js`) integrado via variável de ambiente `GEMINI_API_KEY`.
 
-A arquitetura está documentada conforme as abstrações do Modelo C4: 
+---
 
-📄 Nível 1 — Diagrama de Contexto: 
+## 7. Registros de Decisões Arquiteturais (ADRs)
 
- 
+| ADR | Título | Status |
+|---|---|---|
+| [ADR-001](adrs/ADR-001.md) | Estilo Arquitetural (Microsserviços e EDA) | Aprovado |
+| [ADR-002](adrs/ADR-002.md) | Desacoplamento com DIP e Padrões GoF | Aprovado |
+| [ADR-003](adrs/ADR-003.md) | Protocolos de Integração (REST e Apache Kafka) | Aprovado |
+| [ADR-004](adrs/ADR-004.md) | Contextos Delimitados e Camada Anti-Corrupção | Aprovado |
+| [ADR-005](adrs/ADR-005.md) | Stack de Persistência e API Gateway (PostgreSQL e Kong) | Aprovado |
+| [ADR-006](adrs/ADR-006.md) | Guardrails de IA e Conformidade LGPD | Aprovado |
 
-📄 Nível 2 — Diagrama de Contêineres: 
+---
 
- 
+## 8. Testes & Fitness Functions (Governança Automatizada)
 
-📄 Nível 3 — Diagrama de Componentes: 
+Documentação completa em [docs/fitness-functions.md](docs/fitness-functions.md).
 
- 
+- **Regra validada (`lgpd.fitness.test.js`):** O endpoint `GET /api/v1/print-orders/{orderId}/status` não expõe e-mail nem CPF e retorna apenas as chaves `orderId` e `status`.
+- **Nota de segurança:** A chave `chave-secreta-ecommerce-123` presente no `kong.yml` é exclusivamente para ambiente local de desenvolvimento (não usar em produção).
 
- 
+### Como executar
 
-Visualização do Diagrama de Contêineres (C4 - Nível 2) 
-
-
-4. Domain-Driven Design (DDD) & Limites de Contexto 
-
-4.1. Classificação dos Subdomínios 
-
-Core Domain (Domínio Principal): [ex: Motor de Avaliação Automática de Código / Engine de Lances em Tempo Real] 
-
-Supporting Subdomain (Suporte): [ex: Gestão de Notificações e Posições Acadêmicas] 
-
-Generic Subdomain (Genérico): [ex: Autenticação SSO, Gateway de Pagamento Terceirizado] 
-
-4.2. Mapa de Contexto e Camada Anti-Corrupção (ACL) 
-
-O sistema integra-se a serviços legados utilizando o padrão Anti-Corruption Layer (ACL) com a implementação de adaptadores GoF (Adapter Pattern) localizados em , isolando a Linguagem Ubíqua do núcleo do sistema. 
-
- 
-
-5. Padrões de Projeto & Princípios SOLID 
-
-5.1. Princípios SOLID Aplicados 
-
-Dependency Inversion Principle (DIP): O domínio declara interfaces de repositórios e serviços (), enquanto a infraestrutura provê a implementação concreta (). 
-
-Open/Closed Principle (OCP): Extensão de novos algoritmos de negócio via polimorfismo sem alteração das classes mestres. 
-
-5.2. Catálogo de Padrões GoF Utilizados 
-
-Padrão GoF, Categoria, Localização no Código (), Problema de Engenharia Resolvido 
-
-Factory Method, Criacional, , Instanciação dinâmica de conectores de integração sem acoplamento a classes concretas. 
-
-Adapter, Estrutural, , Tradução de payloads XML/EDI de sistemas legados para os DTOs em JSON do domínio. 
-
-Strategy, Comportamental, , Eliminação de condicionais if/else complexas para alternância de regras de negócio. 
-
- 
-
-6. Resiliência, Integração e IA-Native 
-
-6.1. Padrões de Resiliência Aplicados 
-
-Circuit Breaker & Fallback: Implementado via Polly em chamadas HTTP síncronas para evitar thread starvation. 
-
-Nivelamento de Carga (Load Leveling): Mensageria assíncrona absorve picos de concorrência com filas Dead Letter Queue (DLQ) atreladas. 
-
-6.2. Componente de Inteligência Artificial Generativa 
-
-Arquitetura AI-Native: [Descreva o uso de RAG / Model Tiering / Multi-Agentes]. 
-
-Guardrails & Segurança: Saídas estruturadas validadas via JSON Schema e higienização prévia de PII antes do envio aos modelos. 
-
- 
-
-7. Registros de Decisões Arquiteturais (ADRs) 
-
-Todas as decisões estratégicas e seus trade-offs estão registrados na pasta : 
-
-ADR, Título da Decisão Arquitetural, Status, Data 
-
-ADR-001, Adoção do Estilo Arquitetural (Monólito Modular vs. Microsserviços), Aprovado, 2026-09-10 
-
-ADR-002, Estratégia de Desacoplamento de Código com DIP e Padrões GoF, Aprovado, 2026-10-05 
-
-ADR-003, Definição dos Protocolos de Integração (gRPC, REST e RabbitMQ), Aprovado, 2026-10-20 
-
-ADR-004, Mapeamento de Contextos Delimitados e Camada Anti-Corrupção, Aprovado, 2026-10-28 
-
-ADR-005, Seleção de Frameworks, Banco Vetorial e Stack do API Gateway, Aprovado, 2026-11-05 
-
-ADR-006, Integração de Componentes Probabilísticos e Guardrails de IA, Aprovado, 2026-11-15 
-
- 
-
-8. Testes & Fitness Functions (Governança Automatizada) 
-
-8.1. Execução das Fitness Functions (ArchUnit) 
-
-Para garantir que as regras de dependência entre camadas não sejam violadas no código, executamos testes de arquitetura automatizados: 
-
-Regra Validada 1: A camada de Domínio não possui referência direta para a camada de Infraestrutura. 
-
-Regra Validada 2: Todas as classes de repositório implementam uma interface abstrata correspondente. 
-
- 
+    docker compose up -d
+    API_KEY=chave-secreta-ecommerce-123 npm test
+    node adapters/demo.cjs

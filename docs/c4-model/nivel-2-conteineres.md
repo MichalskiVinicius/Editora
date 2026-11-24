@@ -64,7 +64,7 @@ flowchart TB
 
 | Mensageria | RabbitMQ | Absorve picos e isola a lentidão da gráfica (ADR-003) |
 
-| Banco de dados | \[CONFIRMAR qual] | Persistência dos dados do negócio |
+| Banco de dados | PostgreSQL 15 (`agiledb`) | Persistência dos dados do negócio |
 
 
 
@@ -72,7 +72,5 @@ flowchart TB
 
 \- Estilo adotado: monólito modular (ADR-001). Os módulos poderão virar serviços no futuro.
 
-\- \[CONFIRMAR] No docker-compose.yml: quais contêineres realmente existem (banco, RabbitMQ).
 
-\- \[CONFIRMAR] Se não houver banco vetorial, não incluí-lo (ver ADR-005).
 

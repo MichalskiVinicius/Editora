@@ -1,7 +1,7 @@
 const axios = require('axios');
 
 const API_BASE_URL = 'http://localhost:8000/api/v1';
-const API_KEY = 'chave-secreta-ecommerce-123';
+const API_KEY = process.env.API_KEY || '';
 
 describe('Fitness Function: Segurança / LGPD', () => {
     

@@ -86,7 +86,5 @@ flowchart LR
 
 \## Observações
 
-\- \[CONFIRMAR] Se os adaptadores da ACL já existem como arquivos no código. Se não existirem, indicar "a implementar" e conferir com a branch do padrão Adapter.
 
-\- \[CONFIRMAR] Se o código separa os contextos por arquivo (catalogo.js, royalties.js, agente-ia.js).
 
